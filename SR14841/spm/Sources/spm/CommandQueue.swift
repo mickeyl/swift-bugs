@@ -53,7 +53,7 @@ actor StreamCommandQueue {
     }
 }
 
-func doIt() {
+public func doIt() {
 
     async {
         let streamQueue = StreamCommandQueue()
