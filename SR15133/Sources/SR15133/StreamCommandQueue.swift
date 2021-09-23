@@ -93,7 +93,7 @@ public class StreamCommand {
     }
 }
 
-public actor StreamCommandQueue {
+public actor StreamCommandQueue: NSObject {
 
     let input: InputStream
     let output: OutputStream
@@ -113,6 +113,7 @@ public actor StreamCommandQueue {
         self.output = output
         self.termination = termination
         //self.errorHandler = errorhandler
+        super.init()
         self.input.delegate = self
         self.output.delegate = self
         /* Note: This will schedule the input and the output streams for processing their handles in the main thread.
