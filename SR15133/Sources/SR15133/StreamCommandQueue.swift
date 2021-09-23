@@ -7,7 +7,7 @@ public enum StreamError: Error {
     case invalidEncoding /// The peer returned data with an invalid encoding
 }
 /// The continuation type to be stored in a ``StreamCommand``.
-typealias Continuation = CheckedContinuation<String, Error>
+public typealias Continuation = CheckedContinuation<String, Error>
 
 /// Represents a single command to be sent over the stream
 public class StreamCommand {
@@ -38,7 +38,7 @@ public class StreamCommand {
     var canRead: Bool { self.state == .transmitted || self.state == .responding }
     var isCompleted: Bool { self.state == .completed }
 
-    init(string: String, timeout: TimeInterval, termination: String, continuation: Continuation, timeoutHandler: @escaping( () -> Void)) {
+    public init(string: String, timeout: TimeInterval, termination: String, continuation: Continuation, timeoutHandler: @escaping( () -> Void)) {
         self.outputBuffer = Array(string.utf8)
         self.termination = Array(termination.utf8)
         self.timeout = timeout
@@ -66,11 +66,13 @@ public class StreamCommand {
         self.state = .responding
 
         let read = stream.read(&self.tempBuffer, maxLength: self.tempBuffer.count)
-        print("read \(read) bytes")
+        print("read \(read) bytes: \(self.tempBuffer[..<read])")
         self.inputBuffer += self.tempBuffer[0..<read]
         guard let terminationRange = self.inputBuffer.lastRange(of: self.termination) else {
+            print("did not find termination")
             return
         }
+        print("got termination at \(terminationRange)")
         self.timer.cancel()
         self.inputBuffer.removeLast(terminationRange.count)
         self.state = .completed
@@ -91,12 +93,16 @@ public class StreamCommand {
     }
 }
 
-public actor StreamCommandQueue: NSObject {
+public actor StreamCommandQueue {
 
     let input: InputStream
     let output: OutputStream
     var pendingCommands: [StreamCommand] = []
-    var activeCommand: StreamCommand?
+    var activeCommand: StreamCommand? {
+        didSet {
+            print("active command now \(self.activeCommand)")
+        }
+    }
     let termination: String
     //let errorHandler: ()->Void
 
@@ -107,14 +113,11 @@ public actor StreamCommandQueue: NSObject {
         self.output = output
         self.termination = termination
         //self.errorHandler = errorhandler
-
-        super.init()
-
         self.input.delegate = self
         self.output.delegate = self
         /* Note: This will schedule the input and the output streams for processing their handles in the main thread.
          * In most cases this should not be a problem, although we might consider to spin a secondary thread just for the
-         * purpose of keeping _everything_ from the main thread. */
+         * purpose of keeping _everything_ off the main thread. */
         self.input.schedule(in: RunLoop.current, forMode: .common)
         self.output.schedule(in: RunLoop.current, forMode: .common)
 
@@ -161,8 +164,8 @@ private extension StreamCommandQueue {
         command.read(from: self.input)
         if command.isCompleted {
             command.resumeContinuation()
+            self.activeCommand = nil
         }
-        self.activeCommand = nil
     }
     
     func timeoutActiveCommand() {
@@ -178,7 +181,7 @@ private extension StreamCommandQueue {
         self.output.delegate = nil
         if let command = self.activeCommand {
             command.resumeContinuation(throwing: .communication)
-            self.activeCommand = nil // this triggers EXC_BREAKPOINT in _dispatch_queue_xref_dispose.cold.2
+            self.activeCommand = nil
         }
 
     }
