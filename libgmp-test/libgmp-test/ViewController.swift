@@ -15,16 +15,16 @@ class ViewController: NSViewController {
         super.viewDidLoad()
 
         var e: mpz_t = .init()
+
+        // this is what works
         __gmpz_clear(&e)
 
-        //mpz_c.clear(e)
-
-        // Do any additional setup after loading the view.
+        //this is what I would have expected
+        //mpz_clear(e)
     }
 
     override var representedObject: Any? {
         didSet {
-        // Update the view, if already loaded.
         }
     }
 
