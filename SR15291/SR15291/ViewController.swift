@@ -16,7 +16,7 @@ class ViewController: UIViewController {
 
         NotificationCenter.default.addObserver(self, selector: #selector(onNotification), name: Self.MyNotification, object: nil)
 
-        DispatchQueue.global().asyncAfter(deadline: .now() + 1) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             NotificationCenter.default.post(name: Self.MyNotification, object: self)
         }
     }

@@ -1,0 +1,5 @@
+module libgmp {
+  header "gmp.h"
+  link "gmp"
+  export *
+}
